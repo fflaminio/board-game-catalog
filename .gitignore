@@ -1,0 +1,11 @@
+# File locali da non pubblicare
+BACKUP/
+FOTO/
+Claude outputs/
+~$*.xlsx
+
+# File tecnici
+node_modules/
+.wrangler/
+.dev.vars*
+.DS_Store
