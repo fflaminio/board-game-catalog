@@ -8,6 +8,7 @@ Claude outputs/
 node_modules/
 .wrangler/
 .dev.vars*
+!.dev.vars.example
 .DS_Store
 
 # Generato dal build (npm run build): non va versionato

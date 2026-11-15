@@ -1,0 +1,2 @@
+# Owner password (max 16 characters). Set it as a secret in Cloudflare, never in the code.
+ADMIN_PASSWORD=

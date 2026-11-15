@@ -5,7 +5,7 @@ description: Build or extend a Board Game Wall catalog. Turns photos of a board 
 
 # Board game catalog from photos
 
-Produces everything the site build needs, inside a copy of the `board-game-catalog` repository:
+Produces everything the site build needs, inside a copy of the `board-game-catalog` repository (or as files to upload, see step 7):
 
 - `data/Giochi_in_scatola_FINALE.xlsx`: sheet `Giochi` (one row per game) and sheet `Glossary` (definitions).
 - `public/covers/NNN.webp`: front cover per game (NNN = 3-digit game ID).
@@ -15,7 +15,7 @@ Never invent data. A value that is not verified is either an estimate (yellow ce
 
 ## Modes
 
-- **From photos**: the user gives a folder of shelf photos. Build the full catalog (steps 1–7).
+- **From photos**: the user gives shelf photos (a folder or attachments) and usually the sample Excel as template. Build the full catalog (steps 1–7). The new catalog replaces the sample games: keep sheets and headers, delete the sample rows and their Glossary terms no longer used, start IDs from 1.
 - **Add one game**: the user gives a name, a BoardGameGeek (BGG) link or a box photo. Skip step 1, append one row with the next free ID (steps 2–7).
 
 Before writing, back up the existing Excel (`*_backup_<date>.xlsx`, outside `data/`) and never renumber or reorder existing rows.
@@ -103,3 +103,9 @@ Columns: `Term` · `Type` (`Mechanic` or `Category`) · `Definition (max 10 word
 ## 7. Deliver
 
 Report: games added (ID, title), estimated cells, unresolved items, backup location. Publishing = commit the changed files to the repository's `main` branch; Cloudflare rebuilds the site.
+
+If you cannot write to the repository (for example in a chat app), deliver ready-to-upload files instead:
+
+- the Excel file `Giochi_in_scatola_FINALE.xlsx` (it goes in `data/`);
+- one ZIP per upload batch, each with at most 100 images, keeping the paths `public/covers/NNN.webp` and `public/covers/thumbs/NNN.webp`;
+- the upload order for the user: images first, Excel last (a build that runs in between may fail; the site stays online).

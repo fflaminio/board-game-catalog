@@ -5,9 +5,20 @@
   "description": "Board Game Wall: a public catalog of a board game collection",
   "license": "MIT",
   "scripts": {
-    "build": "node scripts/build-catalog.mjs"
+    "build": "node scripts/build-catalog.mjs",
+    "deploy": "npx wrangler d1 migrations apply DB --remote && npx wrangler deploy"
   },
   "dependencies": {
     "exceljs": "^4.4.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "DB": {
+        "description": "Database for favorites and plays. The tables are created automatically at the first deploy."
+      },
+      "ADMIN_PASSWORD": {
+        "description": "Owner password, max 16 characters: you will type it on the site to change favorites and record plays. Do not reuse a password you use elsewhere."
+      }
+    }
   }
 }
