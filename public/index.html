@@ -1,16 +1,66 @@
-<!DOCTYPE html>
-<html lang="it">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Board Game Catalog</title>
-  <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center;
-           font-family: system-ui, sans-serif; background: #f6efe1; color: #5a3e2b; }
-    h1 { font-size: clamp(1.5rem, 5vw, 2.5rem); text-align: center; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Board Game Wall</title>
+<meta name="description" content="A personal board game collection: filter by duration, players, effort and category, and open any game for details, rulebook and music.">
+<meta name="theme-color" content="#EBDDBB">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/fredoka-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/nunito-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/app.css">
+<script src="/js/app.js" type="module" defer></script>
 </head>
 <body>
-  <h1>Board Game Catalog<br><small>in costruzione</small></h1>
+<div id="app">
+  <header class="m-head" id="mHead">
+    <div class="brand"><span class="brand-name">BOARD GAME WALL</span><span class="led" aria-hidden="true"></span></div>
+    <div class="m-row">
+      <button type="button" class="keycap m-filters" id="openFilters" aria-haspopup="dialog" aria-controls="panel">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>
+        FILTERS
+      </button>
+      <div class="lcd m-count"><span class="m-count-label">GAMES</span><span class="m-count-num" data-count>0</span></div>
+    </div>
+    <div class="lcd m-summary" id="summary"></div>
+  </header>
+
+  <aside class="panel" id="panel" aria-label="Filters">
+    <span class="wood wood-l" aria-hidden="true"></span><span class="wood wood-r" aria-hidden="true"></span>
+    <span class="screw s1" aria-hidden="true"></span><span class="screw s2" aria-hidden="true"></span><span class="screw s3" aria-hidden="true"></span><span class="screw s4" aria-hidden="true"></span>
+    <div class="panel-head">
+      <div class="brand"><span class="brand-name" id="panelTitle"><span class="only-d">BOARD GAME WALL</span><span class="only-m">FILTERS</span></span><span class="led" aria-hidden="true"></span></div>
+      <button type="button" class="keycap icon-btn sheet-close" id="closeFilters" aria-label="Close filters">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="knobs" id="knobs"></div>
+    <label class="search">
+      <span class="sr-only">Search by keyword</span>
+      <input class="lcd lcd-input" id="search" type="text" placeholder="SEARCH …" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="60">
+    </label>
+    <div class="found-row">
+      <div class="found">
+        <div class="lcd found-num" data-count aria-live="polite" aria-atomic="true">0</div>
+        <div class="label">GAMES FOUND</div>
+      </div>
+      <div class="panic">
+        <button type="button" class="panic-btn" id="panic" aria-label="PANIC: reset all filters"></button>
+        <div class="label">PANIC</div>
+        <div class="hint">reset filters</div>
+      </div>
+    </div>
+    <button type="button" class="keycap show-btn" id="showGames">SHOW <span data-count>0</span> GAMES</button>
+  </aside>
+
+  <main class="wall" id="wall" tabindex="-1">
+    <div class="grid" id="grid" role="group" aria-label="Games"></div>
+    <p class="empty" id="empty" hidden>No games match these filters.<br><span>Press PANIC to reset.</span></p>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" hidden></div>
+<noscript><p style="padding:24px;font-family:sans-serif">This catalog needs JavaScript to filter and show the games.</p></noscript>
 </body>
 </html>

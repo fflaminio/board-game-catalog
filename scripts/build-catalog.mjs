@@ -11,6 +11,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const XLSX_FILE = join(ROOT, 'data', 'Giochi_in_scatola_FINALE.xlsx');
 const SHEET = 'Giochi';
 const COVERS_DIR = join(ROOT, 'public', 'covers');
+const THUMBS_DIR = join(COVERS_DIR, 'thumbs');
 const OUT_FILE = join(ROOT, 'public', 'catalog.json');
 
 const GLOSSARY_SHEET = 'Glossary';
@@ -165,6 +166,7 @@ for (const [key, header] of Object.entries(COL)) {
 if (errors.length) fail();
 
 const coverFiles = new Set(existsSync(COVERS_DIR) ? readdirSync(COVERS_DIR) : []);
+const thumbFiles = new Set(existsSync(THUMBS_DIR) ? readdirSync(THUMBS_DIR) : []);
 const usedCovers = new Set();
 const seenIds = new Set();
 const games = [];
@@ -240,6 +242,7 @@ for (let r = 2; r <= ws.rowCount; r++) {
   if (Number.isInteger(idNum)) {
     if (coverFiles.has(coverName)) usedCovers.add(coverName);
     else err(`Copertina mancante: public/covers/${coverName}`);
+    if (coverFiles.has(coverName) && !thumbFiles.has(coverName)) warn(`Miniatura mancante: public/covers/thumbs/${coverName} (uso la copertina intera: sito più lento)`);
   }
 
   // celle gialle = valori stimati
@@ -269,6 +272,7 @@ for (let r = 2; r <= ws.rowCount; r++) {
     rulebook,
     music,
     cover: `covers/${coverName}`,
+    thumb: thumbFiles.has(coverName) ? `covers/thumbs/${coverName}` : `covers/${coverName}`,
     estimated,
   });
 }

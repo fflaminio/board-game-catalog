@@ -1,0 +1,4 @@
+/fonts/*
+  Cache-Control: public, max-age=2592000, immutable
+/covers/*
+  Cache-Control: public, max-age=86400

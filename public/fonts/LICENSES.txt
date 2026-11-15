@@ -1,0 +1,6 @@
+Fonts self-hosted for performance and privacy (no third-party requests).
+All are licensed under the SIL Open Font License 1.1 (https://openfontlicense.org):
+- Fredoka (The Fredoka Project Authors)
+- Nunito (The Nunito Project Authors)
+- Share Tech Mono (Carrois Apostrophe)
+Files come from the Fontsource npm packages (latin subset).
