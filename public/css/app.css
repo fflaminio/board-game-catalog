@@ -64,7 +64,7 @@ a:hover { color: var(--cta2); }
   background-color: var(--panel); background-image: repeating-linear-gradient(0deg, rgba(58, 42, 30, .035) 0 1px, transparent 1px 3px);
   transform: translateY(100%); visibility: hidden; transition: transform .25s ease, visibility .25s;
 }
-.panel.open { transform: none; visibility: visible; }
+.panel.open { transform: none; visibility: visible; transition: transform .25s ease; } /* visible at once on open, so focus can move into the sheet */
 .panel-head { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
 .wood, .screw { display: none; }
 .only-d { display: none; }
