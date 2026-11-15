@@ -103,11 +103,11 @@ Both options give the same result: your own copy of the project on GitHub, conne
 
    [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/fflaminio/board-game-catalog)
 
-2. Log in to Cloudflare when asked.
-3. **Git account**: choose GitHub and allow Cloudflare to access it. Cloudflare will create a copy of the project in your GitHub account.
-4. Keep the proposed names for the project and the database, or change them as you like.
+2. Log in to Cloudflare when asked. The page **Set up your application** opens.
+3. **Git account**: choose GitHub and allow Cloudflare to access it. Cloudflare creates a copy of the project in your GitHub account. You can tick **Create private Git repository** to keep that copy private.
+4. **Project name** (`board-game-catalog`) and **D1 database** (`board-game-db`, new): keep them or change them as you like. The project name becomes part of your site address.
 5. **ADMIN_PASSWORD**: type your owner password (max 16 characters) and note it somewhere safe.
-6. Leave the build and deploy commands as they are and click the deploy button at the bottom of the page.
+6. Leave **Build command** (`npm run build`), **Deploy command** (`npm run deploy`) and the other settings as they are, then click **Deploy**.
 7. Wait 2–3 minutes. Cloudflare shows the address of your site, ending in `.workers.dev`. Open it: you see the demo collection.
 
 Cloudflare has created everything: the copy of the project on GitHub, the database with its tables, the password and automatic publishing. Go to [step 4](#step-4-turn-your-photos-into-your-catalog).
@@ -121,7 +121,7 @@ Cloudflare has created everything: the copy of the project on GitHub, the databa
 
 **B2. Create the database**
 
-1. In Cloudflare, open **Storage & databases → D1 SQL database → Create**.
+1. In Cloudflare, open **Storage & databases → D1 SQLite Database → Create**.
 2. Name it `board-game-db` and confirm.
 3. Open its **Console** tab.
 4. In your repository, open `migrations/0001_init.sql` and copy all its text.
