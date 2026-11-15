@@ -13,8 +13,12 @@ const SHEET = 'Giochi';
 const COVERS_DIR = join(ROOT, 'public', 'covers');
 const OUT_FILE = join(ROOT, 'public', 'catalog.json');
 
-const MACROS = ['Bambini', 'Party', 'Abilità e riflessi', 'Bluff e deduzione', 'Strategia', 'Avventura e fantasy'];
+const GLOSSARY_SHEET = 'Glossary';
+const GLOSSARY_MAX_WORDS = 10;
+const MACROS = ['Kids', 'Party', 'Skill & Reflexes', 'Bluff & Deduction', 'Strategy', 'Adventure & Fantasy'];
 const HIDDEN_CATEGORIES = ['Expansion for Base-game'];
+// Termini BGG che contengono virgole: non vanno spezzati dalla lista separata da virgole
+const PROTECTED_TERMS = ['Deck, Bag, and Pool Building'];
 const MISSING_PREFIXES = ['Non reperito', 'Non accreditato', 'Non classificato', '—'];
 const YELLOW = 'FFF2CC';
 
@@ -110,7 +114,14 @@ function parseAge(s) {
 
 function splitList(s) {
   if (s == null) return [];
-  return s.split(',').map((x) => x.trim()).filter((x) => x && !MISSING_PREFIXES.some((p) => x.startsWith(p)));
+  let work = s;
+  PROTECTED_TERMS.forEach((term, i) => {
+    work = work.split(term).join(`\u0001${i}\u0001`);
+  });
+  return work
+    .split(',')
+    .map((x) => x.trim().replace(/\u0001(\d+)\u0001/g, (_, i) => PROTECTED_TERMS[Number(i)]))
+    .filter((x) => x && !MISSING_PREFIXES.some((p) => x.startsWith(p)));
 }
 
 function creditText(s) {
@@ -179,8 +190,8 @@ for (let r = 2; r <= ws.rowCount; r++) {
   else if (description.split(/\s+/).length > 30) warn('DESCRIZIONE oltre 30 parole');
 
   const typeRaw = text(get('type'));
-  const type = typeRaw === 'Base' ? 'base' : typeRaw === 'Espansione' ? 'expansion' : null;
-  if (!type) err(`Tipo non valido: "${typeRaw}" (ammessi: Base, Espansione)`);
+  const type = typeRaw === 'Base' ? 'base' : typeRaw === 'Expansion' ? 'expansion' : null;
+  if (!type) err(`Tipo non valido: "${typeRaw}" (ammessi: Base, Expansion)`);
 
   const players = parseRange(text(get('players')));
   if (!players) err(`Players non valido: "${text(get('players'))}"`);
@@ -265,6 +276,41 @@ for (let r = 2; r <= ws.rowCount; r++) {
 for (const f of coverFiles) if (f.endsWith('.webp') && !usedCovers.has(f)) warnings.push(`Copertina senza gioco nell'Excel: ${f}`);
 if (!games.length) errors.push('Nessun gioco trovato nel foglio Excel.');
 
+// ---------- glossario (definizioni di Mechanic e Category) ----------
+
+const glossary = { mechanics: {}, categories: {} };
+const gws = wb.getWorksheet(GLOSSARY_SHEET);
+if (!gws) {
+  errors.push(`Foglio "${GLOSSARY_SHEET}" non trovato nel file Excel.`);
+} else {
+  const defs = { Mechanic: new Map(), Category: new Map() };
+  for (let r = 2; r <= gws.rowCount; r++) {
+    const row = gws.getRow(r);
+    const term = text(row.getCell(1));
+    const kind = text(row.getCell(2));
+    const def = text(row.getCell(3));
+    if (!term && !kind && !def) continue;
+    const at = `Glossary riga ${r} ("${term ?? '?'}")`;
+    if (!term || !def) { errors.push(`${at}: termine o definizione mancante`); continue; }
+    if (!defs[kind]) { errors.push(`${at}: Type non valido "${kind}" (ammessi: Mechanic, Category)`); continue; }
+    if (defs[kind].has(term)) { errors.push(`${at}: termine duplicato`); continue; }
+    if (def.split(/\s+/).length > GLOSSARY_MAX_WORDS) errors.push(`${at}: definizione oltre ${GLOSSARY_MAX_WORDS} parole`);
+    defs[kind].set(term, def);
+  }
+  const usedBy = { Mechanic: new Map(), Category: new Map() };
+  for (const g of games) {
+    for (const t of g.mechanics) (usedBy.Mechanic.get(t) ?? usedBy.Mechanic.set(t, []).get(t)).push(g.id);
+    for (const t of g.categories) (usedBy.Category.get(t) ?? usedBy.Category.set(t, []).get(t)).push(g.id);
+  }
+  for (const [kind, used] of Object.entries(usedBy)) {
+    const target = kind === 'Mechanic' ? glossary.mechanics : glossary.categories;
+    for (const term of [...used.keys()].sort((a, b) => a.localeCompare(b))) {
+      if (defs[kind].has(term)) target[term] = defs[kind].get(term);
+      else errors.push(`Glossary: manca la definizione di ${kind} "${term}" (usato dai giochi ID ${used.get(term).join(', ')})`);
+    }
+  }
+}
+
 if (warnings.length) {
   console.warn(`\nAVVISI (${warnings.length}):`);
   warnings.forEach((w) => console.warn(`  - ${w}`));
@@ -273,8 +319,10 @@ if (errors.length) fail();
 
 games.sort((a, b) => a.id - b.id);
 mkdirSync(dirname(OUT_FILE), { recursive: true });
-writeFileSync(OUT_FILE, JSON.stringify({ version: 1, count: games.length, games }));
-console.log(`OK: ${games.length} giochi -> public/catalog.json`);
+writeFileSync(OUT_FILE, JSON.stringify({ version: 2, count: games.length, games, glossary }));
+console.log(
+  `OK: ${games.length} giochi, ${Object.keys(glossary.mechanics).length} mechanics, ${Object.keys(glossary.categories).length} categories -> public/catalog.json`,
+);
 
 function fail() {
   console.error(`\nERRORI (${errors.length}): catalogo NON generato, deploy interrotto.`);
