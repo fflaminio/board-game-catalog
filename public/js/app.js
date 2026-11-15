@@ -151,7 +151,7 @@ function makeKnob(key) {
     g, h('span', { class: 'dial-body' }, h('span', { class: 'dial-cap' }), ind),
     h('span', { class: 'dial-end l' }, sc.endL), h('span', { class: 'dial-end r' }, sc.endR));
   const val = h('div', { class: 'lcd knob-val' });
-  const root = h('div', { class: 'knob' }, h('div', { class: 'knob-title', id: `k-${key}` }, sc.title), dial, val, h('div', { class: 'knob-hint' }, sc.hint));
+  const root = h('div', { class: 'knob' }, val, dial, h('div', { class: 'knob-title', id: `k-${key}` }, sc.title), h('div', { class: 'knob-hint' }, sc.hint));
 
   function paint() {
     const idx = state[key];

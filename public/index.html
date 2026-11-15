@@ -35,29 +35,27 @@
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
       </button>
     </div>
-    <div class="knobs" id="knobs"></div>
-    <div class="fav-row" id="favRow" hidden>
-      <div><div class="label fav-title" id="favTitle">FAVORITES</div><div class="hint">Show only my favorite games</div></div>
-      <button type="button" class="fav-btn" id="favBtn" aria-pressed="false" aria-labelledby="favTitle">
-        <span class="fav-cap"><span class="fav-led" aria-hidden="true"></span><svg class="heart" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 5 6.2 5c2 0 3.5 1.1 4.3 2.5h3C14.3 6.1 15.8 5 17.8 5 21 5 23.1 8.2 21.6 11.7 19.5 16.4 12 21 12 21z"/></svg></span>
-      </button>
+    <div class="found-row">
+      <button type="button" class="keycap show-btn" id="showGames">SHOW GAMES</button>
+      <div class="lcd found" aria-live="polite" aria-atomic="true"><span class="found-label">GAMES FOUND</span><span class="found-num" data-count>0</span></div>
     </div>
+    <div class="knobs" id="knobs"></div>
     <label class="search">
       <span class="sr-only">Search by keyword</span>
       <input class="lcd lcd-input" id="search" type="text" placeholder="SEARCH …" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="60">
     </label>
-    <div class="found-row">
-      <div class="found">
-        <div class="lcd found-num" data-count aria-live="polite" aria-atomic="true">0</div>
-        <div class="label">GAMES FOUND</div>
+    <div class="ctrl-row">
+      <div class="ctrl" id="favRow" hidden>
+        <button type="button" class="fav-btn" id="favBtn" aria-pressed="false" aria-labelledby="favTitle">
+          <span class="fav-cap"><span class="fav-led" aria-hidden="true"></span><svg class="heart" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 5 6.2 5c2 0 3.5 1.1 4.3 2.5h3C14.3 6.1 15.8 5 17.8 5 21 5 23.1 8.2 21.6 11.7 19.5 16.4 12 21 12 21z"/></svg></span>
+        </button>
+        <div class="label" id="favTitle">FAVORITES</div>
       </div>
-      <div class="panic">
+      <div class="ctrl ctrl-panic">
         <button type="button" class="panic-btn" id="panic" aria-label="PANIC: reset all filters"></button>
         <div class="label">PANIC</div>
-        <div class="hint">reset filters</div>
       </div>
     </div>
-    <button type="button" class="keycap show-btn" id="showGames">SHOW <span data-count>0</span> GAMES</button>
   </aside>
 
   <main class="wall" id="wall" tabindex="-1">
