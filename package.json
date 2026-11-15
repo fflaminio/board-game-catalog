@@ -1,0 +1,12 @@
+{
+  "name": "board-game-catalog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Catalogo pubblico dei giochi in scatola",
+  "scripts": {
+    "build": "node scripts/build-catalog.mjs"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  }
+}

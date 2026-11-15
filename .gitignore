@@ -9,3 +9,6 @@ node_modules/
 .wrangler/
 .dev.vars*
 .DS_Store
+
+# Generato dal build (npm run build): non va versionato
+public/catalog.json
