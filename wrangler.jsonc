@@ -2,6 +2,8 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "board-game-catalog",
   "compatibility_date": "2026-11-13",
+  "workers_dev": true,
+  "preview_urls": false,
   "assets": {
     "directory": "./public"
   }
