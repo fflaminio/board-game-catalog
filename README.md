@@ -40,8 +40,9 @@ From a slightly geeky board game lover to board game lovers: an open, free proje
   - [Step 3. Put the demo site online: choose A or B](#step-3-put-the-demo-site-online-choose-a-or-b)
     - [Option A. Automatic: fewer steps, for beginners](#option-a-automatic-fewer-steps-for-beginners)
     - [Option B. Manual: more steps, more control](#option-b-manual-more-steps-more-control)
-  - [Step 4. Turn your photos into your catalog](#step-4-turn-your-photos-into-your-catalog)
-  - [Step 5. Upload your catalog](#step-5-upload-your-catalog)
+  - [Step 4. Empty the demo catalog](#step-4-empty-the-demo-catalog)
+  - [Step 5. Turn your photos into your catalog](#step-5-turn-your-photos-into-your-catalog)
+  - [Step 6. Upload your catalog](#step-6-upload-your-catalog)
 - [Keep your catalog up to date](#keep-your-catalog-up-to-date)
 - [Troubleshooting](#troubleshooting)
 - [For developers](#for-developers)
@@ -73,8 +74,9 @@ Your photos ──(AI assistant + skill)──> Excel file + cover images
 1. Take the photos.
 2. Create the accounts.
 3. Put a demo site online, with the sample collection.
-4. Let the AI build your catalog.
-5. Upload it: your site now shows your games.
+4. Empty the demo catalog.
+5. Let the AI build your catalog.
+6. Upload it: your site now shows your games.
 
 ### Step 1. Photograph your games
 
@@ -95,7 +97,7 @@ Another AI assistant can work too. It must read images, browse the web and creat
 
 ### Step 3. Put the demo site online: choose A or B
 
-Both options give the same result: your own copy of the project on GitHub, connected to Cloudflare, with a site online showing the sample collection. In step 5 you replace it with your games.
+Both options give the same result: your own copy of the project on GitHub, connected to Cloudflare, with a site online showing the sample collection. In steps 4–6 you replace it with your games.
 
 #### Option A. Automatic: fewer steps, for beginners
 
@@ -110,7 +112,7 @@ Both options give the same result: your own copy of the project on GitHub, conne
 6. Leave **Build command** (`npm run build`), **Deploy command** (`npm run deploy`) and the other settings as they are, then click **Deploy**.
 7. Wait 2–3 minutes. Cloudflare shows the address of your site, ending in `.workers.dev`. Open it: you see the demo collection.
 
-Cloudflare has created everything: the copy of the project on GitHub, the database with its tables, the password and automatic publishing. Go to [step 4](#step-4-turn-your-photos-into-your-catalog).
+Cloudflare has created everything: the copy of the project on GitHub, the database with its tables, the password and automatic publishing. Go to [step 4](#step-4-empty-the-demo-catalog).
 
 #### Option B. Manual: more steps, more control
 
@@ -154,16 +156,25 @@ Cloudflare has created everything: the copy of the project on GitHub, the databa
 
 **B6. Check:** open your Worker's address, ending in `.workers.dev`. You see the demo collection.
 
-### Step 4. Turn your photos into your catalog
+### Step 4. Empty the demo catalog
 
-**Get the files:** on your repository page on GitHub, click **Code → Download ZIP** and unzip it on your computer. You need two things from it:
+Your site shows the sample collection. Replace it with an empty catalog, ready for your games. Every build in this step succeeds, so the site always stays online.
 
-- the folder `skills/board-game-catalog-from-photos`;
-- the sample catalog `data/Giochi_in_scatola_FINALE.xlsx`, which Claude uses as a template.
+1. **Download the project:** on your repository page on GitHub click **Code → Download ZIP** and unzip it on your computer. You need it in step 5 too.
+2. **Upload the empty catalog:**
+   - in your repository open the folder `data`, then **Add file → Upload files**;
+   - drag the file `templates/Giochi_in_scatola_FINALE.xlsx` from the unzipped folder. It has the same name, so it replaces the sample;
+   - click **Commit changes**.
+3. **Delete the sample images:**
+   - open the folder `public/covers`;
+   - click **…** at the top right, then **Delete directory**, then **Commit changes**.
+4. **Check:** after 1–2 minutes your site shows *No games in the catalog yet.*
+
+### Step 5. Turn your photos into your catalog
 
 **Add the skill to Claude:**
 
-1. Compress the folder `board-game-catalog-from-photos` into a ZIP file.
+1. In the unzipped project, compress the folder `skills/board-game-catalog-from-photos` into a ZIP file.
 2. In Claude open **Customize → Skills**, click **+**, then **Create skill → Upload a skill**, and choose the ZIP.
 
 If your plan does not allow custom skills, or you use another assistant, open the file `SKILL.md` instead and paste its text at the start of the chat.
@@ -171,32 +182,29 @@ If your plan does not allow custom skills, or you use another assistant, open th
 **Build the catalog:**
 
 1. Start a new chat.
-2. Attach your photos and the sample Excel file. With many photos, send them in batches of about 10–20.
+2. Attach your photos and the empty template `templates/Giochi_in_scatola_FINALE.xlsx`. With many photos, send them in batches of about 10–20.
 3. Write:
 
-   > Use the board-game-catalog-from-photos skill. Build my catalog from these photos, replacing the sample games. Give me the Excel file and the cover images in ZIP files ready to upload to GitHub.
+   > Use the board-game-catalog-from-photos skill. Build my catalog from these photos in this empty template. Give me the Excel file and the cover images in ZIP files ready to upload to GitHub.
 
 4. Claude lists the games it found and asks about the boxes it could not read. Answer and confirm the list.
 5. Download the Excel file and the ZIP files with the images. Each ZIP holds at most 100 images, because GitHub accepts 100 files per upload.
 
 A big collection is a long task: you can work one shelf at a time, asking Claude to add the new games to the same Excel file.
 
-### Step 5. Upload your catalog
+### Step 6. Upload your catalog
 
-Do it in this order: remove the sample images, add yours, then the Excel file. Builds that start before the Excel file is uploaded may fail. That is normal: the site stays online.
+Upload the images first, then the Excel file.
 
-1. **Remove the sample images:**
-   - in your repository, open the folder `public/covers`;
-   - click **…** at the top right, then **Delete directory**, then **Commit changes**.
-2. **Add your images:**
+1. **Add your images:**
    - unzip each image ZIP: inside you find a `public` folder;
    - on your repository's main page click **Add file → Upload files**;
-   - drag that `public` folder onto the page and click **Commit changes**.
-   - Repeat for every ZIP.
-3. **Add the Excel file:**
+   - drag that `public` folder onto the page and click **Commit changes**;
+   - repeat for every ZIP.
+2. **Add the Excel file:**
    - open the folder `data`, then **Add file → Upload files**;
-   - drag `Giochi_in_scatola_FINALE.xlsx` (same name: it replaces the sample) and click **Commit changes**.
-4. **Check:**
+   - drag `Giochi_in_scatola_FINALE.xlsx` (same name: it replaces the empty one) and click **Commit changes**.
+3. **Check:**
    - in Cloudflare open your Worker → **Deployments**: after 1–2 minutes the latest one is successful;
    - open your site and refresh the page: your games are there.
 
@@ -204,7 +212,7 @@ Do it in this order: remove the sample images, add yours, then the Excel file. B
 
 - **Add a game:**
   - in Claude, attach your current Excel file and write: *Use the board-game-catalog-from-photos skill to add this game:* followed by its name, its BoardGameGeek link or a photo of the box;
-  - upload the new cover, the new thumbnail and the Excel file as in step 5, without deleting anything.
+  - upload the new cover, the new thumbnail and the Excel file as in step 6.
 - **Fix a detail**: edit the Excel file and upload it again to `data`. The rules for each column are in the skill.
 - **Favorites and plays**: on your site, open a game. Tap the heart, or **Play it!** after a game night. The password is asked once per visit. **Undo** removes a play recorded by mistake within 10 seconds.
 - **Change the password**:
@@ -215,7 +223,7 @@ Do it in this order: remove the sample images, add yours, then the Excel file. B
 
 | What you see | What to do |
 |---|---|
-| The site does not change after an upload | Open your Worker → **Deployments** → latest build → log. The log names the row, the game ID and the field to fix (messages are in Italian, for example *Copertina mancante* = cover missing). Fix the Excel file and upload it again. Then refresh the page with Ctrl+F5. |
+| The site does not change after an upload | Open your Worker → **Deployments** → latest build → log. Under **ERRORS**, each line names the Excel row, the game ID and what to fix. Fix the Excel file and upload it again, then refresh the page with Ctrl+F5. Lines under **WARNINGS** do not stop publishing. |
 | Build error about the database (option B) | `database_id` in `wrangler.jsonc` is still the original one: repeat B3. |
 | Build error about the Worker name (option B) | The project name in Cloudflare must be `board-game-catalog`, as in `wrangler.jsonc`. |
 | "The password is not set up yet" | The `ADMIN_PASSWORD` secret is missing: see B5. |
@@ -229,6 +237,7 @@ The site is plain HTML, CSS and JavaScript, with no framework. The build reads t
 | Path | Content |
 |---|---|
 | `data/` | catalog Excel: sheet `Giochi` (one row per game) and sheet `Glossary` (definitions) |
+| `templates/` | the same Excel file, empty, to start a catalog from scratch |
 | `public/` | website: `index.html`, `css/`, `js/`, `fonts/`, `covers/` and `covers/thumbs/` |
 | `scripts/build-catalog.mjs` | Excel → `public/catalog.json`, with validation |
 | `src/worker.js` | API: `/api/state`, `/api/login`, `/api/favorite`, `/api/play`, `/api/play/undo` |

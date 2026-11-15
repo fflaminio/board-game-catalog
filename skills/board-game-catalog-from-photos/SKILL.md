@@ -15,7 +15,7 @@ Never invent data. A value that is not verified is either an estimate (yellow ce
 
 ## Modes
 
-- **From photos**: the user gives shelf photos (a folder or attachments) and usually the sample Excel as template. Build the full catalog (steps 1–7). The new catalog replaces the sample games: keep sheets and headers, delete the sample rows and their Glossary terms no longer used, start IDs from 1.
+- **From photos**: the user gives shelf photos (a folder or attachments) and the empty template `templates/Giochi_in_scatola_FINALE.xlsx` (same sheets and headers as the real catalog, no games, Glossary already filled with common terms). Build the full catalog in it (steps 1–7), with IDs from 1. If you get the sample catalog instead, delete its game rows first.
 - **Add one game**: the user gives a name, a BoardGameGeek (BGG) link or a box photo. Skip step 1, append one row with the next free ID (steps 2–7).
 
 Before writing, back up the existing Excel (`*_backup_<date>.xlsx`, outside `data/`) and never renumber or reorder existing rows.
@@ -84,7 +84,7 @@ If no macro results, propose the closest one to the user.
 
 ## 4. Glossary (sheet `Glossary`)
 
-Columns: `Term` · `Type` (`Mechanic` or `Category`) · `Definition (max 10 words)`. Every Mechanic and Category used by any game needs exactly one row, in English, max 10 words. Without it the build stops.
+Columns: `Term` · `Type` (`Mechanic` or `Category`) · `Definition (max 10 words)`. Every Mechanic and Category used by any game needs exactly one row, in English, max 10 words. Without it the build stops. Reuse the existing rows; add only the missing terms; unused rows are allowed.
 
 ## 5. Covers and thumbnails
 
@@ -98,7 +98,7 @@ Columns: `Term` · `Type` (`Mechanic` or `Category`) · `Definition (max 10 word
 - Headers unchanged; types and formats as in the table; yellow only on estimates.
 - DESCRIZIONE ≤ 30 words; Tipo and Macro only from the allowed values; every term in Glossary.
 - Links open and belong to the right game.
-- Run `npm install && npm run build`: it must end with `OK: <n> giochi`. Fix every error it lists.
+- If you can run commands, run `npm install && npm run build`: it must end with `OK: <n> games`. Fix every error it lists (each names the Excel row, the game ID and the field).
 
 ## 7. Deliver
 

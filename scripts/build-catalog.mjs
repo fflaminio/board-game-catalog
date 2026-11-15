@@ -1,6 +1,7 @@
-// Converte data/Giochi_in_scatola_FINALE.xlsx (foglio "Giochi") in public/catalog.json.
-// Si esegue con: npm run build  (Cloudflare lo lancia a ogni deploy).
-// Se trova errori nei dati interrompe il build e NON pubblica nulla.
+// Converts data/Giochi_in_scatola_FINALE.xlsx (sheet "Giochi") into public/catalog.json.
+// Run with: npm run build  (Cloudflare runs it at every deploy).
+// If the data has errors it stops the build and publishes nothing.
+// Messages are in English for everyone who reuses the project.
 
 import ExcelJS from 'exceljs';
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
@@ -142,7 +143,7 @@ function validUrl(s) {
 // ---------- lettura del file ----------
 
 if (!existsSync(XLSX_FILE)) {
-  console.error(`ERRORE: file non trovato: ${XLSX_FILE}`);
+  console.error(`ERROR: file not found: ${XLSX_FILE}`);
   process.exit(1);
 }
 
@@ -150,7 +151,7 @@ const wb = new ExcelJS.Workbook();
 await wb.xlsx.readFile(XLSX_FILE);
 const ws = wb.getWorksheet(SHEET);
 if (!ws) {
-  console.error(`ERRORE: foglio "${SHEET}" non trovato nel file Excel.`);
+  console.error(`ERROR: sheet "${SHEET}" not found in the Excel file.`);
   process.exit(1);
 }
 
@@ -161,7 +162,7 @@ headerRow.eachCell((cell, n) => {
   if (h) colIndex[h] = n;
 });
 for (const [key, header] of Object.entries(COL)) {
-  if (!colIndex[header]) errors.push(`Colonna mancante o rinominata: "${header}" (campo ${key})`);
+  if (!colIndex[header]) errors.push(`Column missing or renamed: "${header}" (field ${key})`);
 }
 if (errors.length) fail();
 
@@ -178,51 +179,51 @@ for (let r = 2; r <= ws.rowCount; r++) {
 
   const idNum = toNumber(text(get('id')));
   const title = text(get('title'));
-  const label = `Riga ${r} (ID ${idNum ?? '?'}, ${title ?? 'senza titolo'})`;
+  const label = `Row ${r} (ID ${idNum ?? '?'}, ${title ?? 'no title'})`;
   const err = (msg) => errors.push(`${label}: ${msg}`);
   const warn = (msg) => warnings.push(`${label}: ${msg}`);
 
-  if (!Number.isInteger(idNum) || idNum < 1) err('ID non valido (serve un intero ≥ 1)');
-  else if (seenIds.has(idNum)) err('ID duplicato');
+  if (!Number.isInteger(idNum) || idNum < 1) err('invalid ID (a whole number ≥ 1 is required)');
+  else if (seenIds.has(idNum)) err('duplicate ID');
   else seenIds.add(idNum);
-  if (!title) err('Titolo mancante');
+  if (!title) err('Titolo (title) missing');
 
   const description = text(get('description'));
-  if (!description) err('DESCRIZIONE mancante');
-  else if (description.split(/\s+/).length > 30) warn('DESCRIZIONE oltre 30 parole');
+  if (!description) err('DESCRIZIONE (description) missing');
+  else if (description.split(/\s+/).length > 30) warn('DESCRIZIONE (description) longer than 30 words');
 
   const typeRaw = text(get('type'));
   const type = typeRaw === 'Base' ? 'base' : typeRaw === 'Expansion' ? 'expansion' : null;
-  if (!type) err(`Tipo non valido: "${typeRaw}" (ammessi: Base, Expansion)`);
+  if (!type) err(`invalid Tipo (type): "${typeRaw}" (allowed: Base, Expansion)`);
 
   const players = parseRange(text(get('players')));
-  if (!players) err(`Players non valido: "${text(get('players'))}"`);
+  if (!players) err(`invalid Players: "${text(get('players'))}" (use 2–4 or 2)`);
   const playingTime = parseRange(text(get('playingTime')));
-  if (!playingTime) err(`Playing time non valido: "${text(get('playingTime'))}"`);
+  if (!playingTime) err(`invalid Playing time: "${text(get('playingTime'))}" (use 30–45 or 30)`);
   const age = parseAge(text(get('age')));
-  if (!age) err(`Age non valido: "${text(get('age'))}"`);
+  if (!age) err(`invalid Age: "${text(get('age'))}" (use 10+)`);
   const complexity = toNumber(text(get('complexity')));
-  if (complexity == null || complexity < 1 || complexity > 5) err(`Complexity non valido: "${text(get('complexity'))}" (1-5)`);
+  if (complexity == null || complexity < 1 || complexity > 5) err(`invalid Complexity: "${text(get('complexity'))}" (a number from 1 to 5)`);
   const score = toNumber(text(get('score')));
-  if (score == null || score < 0 || score > 10) err(`Score non valido: "${text(get('score'))}" (0-10)`);
+  if (score == null || score < 0 || score > 10) err(`invalid Score: "${text(get('score'))}" (a number from 0 to 10)`);
   const bestPlayers = text(get('bestPlayers'));
-  if (!bestPlayers) err('Best players mancante');
+  if (!bestPlayers) err('Best players missing');
 
   const macroCategories = splitList(text(get('macro')));
-  if (!macroCategories.length) err('Macro categoria mancante');
-  for (const m of macroCategories) if (!MACROS.includes(m)) err(`Macro categoria sconosciuta: "${m}"`);
+  if (!macroCategories.length) err('Macro categoria (category) missing');
+  for (const m of macroCategories) if (!MACROS.includes(m)) err(`unknown Macro categoria (category): "${m}" (allowed: ${MACROS.join(', ')})`);
 
   const yearRaw = toNumber(text(get('year')));
   const year = yearRaw && yearRaw > 0 ? yearRaw : null;
   const bggIdRaw = toNumber(text(get('bggId')));
   const bggUrlRaw = urlOf(get('bggUrl'));
   const bggUrl = bggUrlRaw && validUrl(bggUrlRaw) ? bggUrlRaw : null;
-  if (bggUrlRaw && !bggUrl) err(`Link BGG non valido: "${bggUrlRaw}"`);
+  if (bggUrlRaw && !bggUrl) err(`invalid Link BGG: "${bggUrlRaw}"`);
 
   // regolamento
   const rbUrlRaw = urlOf(get('rulebookUrl'));
   const rbUrl = isMissing(rbUrlRaw) ? null : rbUrlRaw;
-  if (rbUrl && !validUrl(rbUrl)) err(`Link regolamento non valido: "${rbUrl}"`);
+  if (rbUrl && !validUrl(rbUrl)) err(`invalid Link regolamento (rulebook link): "${rbUrl}"`);
   const rbParts = (text(get('rulebookInfo')) ?? '').split('·').map((x) => x.trim());
   const rbHasInfo = rbUrl && rbParts[0] && rbParts[0] !== '—';
   const rulebook = {
@@ -234,15 +235,15 @@ for (let r = 2; r <= ws.rowCount; r++) {
 
   // Music Board
   const musicUrl = urlOf(get('musicUrl'));
-  if (!musicUrl || !validUrl(musicUrl)) err(`Link Music Board mancante o non valido: "${musicUrl}"`);
+  if (!musicUrl || !validUrl(musicUrl)) err(`Music Board link missing or invalid: "${musicUrl}"`);
   const music = { url: musicUrl, status: text(get('musicStatus')) };
 
   // copertina
   const coverName = `${String(idNum).padStart(3, '0')}.webp`;
   if (Number.isInteger(idNum)) {
     if (coverFiles.has(coverName)) usedCovers.add(coverName);
-    else err(`Copertina mancante: public/covers/${coverName}`);
-    if (coverFiles.has(coverName) && !thumbFiles.has(coverName)) warn(`Miniatura mancante: public/covers/thumbs/${coverName} (uso la copertina intera: sito più lento)`);
+    else err(`cover missing: public/covers/${coverName}`);
+    if (coverFiles.has(coverName) && !thumbFiles.has(coverName)) warn(`thumbnail missing: public/covers/thumbs/${coverName} (the full cover is used: slower site)`);
   }
 
   // celle gialle = valori stimati
@@ -277,15 +278,15 @@ for (let r = 2; r <= ws.rowCount; r++) {
   });
 }
 
-for (const f of coverFiles) if (f.endsWith('.webp') && !usedCovers.has(f)) warnings.push(`Copertina senza gioco nell'Excel: ${f}`);
-if (!games.length) errors.push('Nessun gioco trovato nel foglio Excel.');
+for (const f of coverFiles) if (f.endsWith('.webp') && !usedCovers.has(f)) warnings.push(`cover with no game in the Excel file: ${f}`);
+if (!games.length) warnings.push('The catalog is empty: the site shows an empty wall until you add games.');
 
 // ---------- glossario (definizioni di Mechanic e Category) ----------
 
 const glossary = { mechanics: {}, categories: {} };
 const gws = wb.getWorksheet(GLOSSARY_SHEET);
 if (!gws) {
-  errors.push(`Foglio "${GLOSSARY_SHEET}" non trovato nel file Excel.`);
+  errors.push(`Sheet "${GLOSSARY_SHEET}" not found in the Excel file.`);
 } else {
   const defs = { Mechanic: new Map(), Category: new Map() };
   for (let r = 2; r <= gws.rowCount; r++) {
@@ -294,11 +295,11 @@ if (!gws) {
     const kind = text(row.getCell(2));
     const def = text(row.getCell(3));
     if (!term && !kind && !def) continue;
-    const at = `Glossary riga ${r} ("${term ?? '?'}")`;
-    if (!term || !def) { errors.push(`${at}: termine o definizione mancante`); continue; }
-    if (!defs[kind]) { errors.push(`${at}: Type non valido "${kind}" (ammessi: Mechanic, Category)`); continue; }
-    if (defs[kind].has(term)) { errors.push(`${at}: termine duplicato`); continue; }
-    if (def.split(/\s+/).length > GLOSSARY_MAX_WORDS) errors.push(`${at}: definizione oltre ${GLOSSARY_MAX_WORDS} parole`);
+    const at = `Glossary row ${r} ("${term ?? '?'}")`;
+    if (!term || !def) { errors.push(`${at}: term or definition missing`); continue; }
+    if (!defs[kind]) { errors.push(`${at}: invalid Type "${kind}" (allowed: Mechanic, Category)`); continue; }
+    if (defs[kind].has(term)) { errors.push(`${at}: duplicate term`); continue; }
+    if (def.split(/\s+/).length > GLOSSARY_MAX_WORDS) errors.push(`${at}: definition longer than ${GLOSSARY_MAX_WORDS} words`);
     defs[kind].set(term, def);
   }
   const usedBy = { Mechanic: new Map(), Category: new Map() };
@@ -310,13 +311,13 @@ if (!gws) {
     const target = kind === 'Mechanic' ? glossary.mechanics : glossary.categories;
     for (const term of [...used.keys()].sort((a, b) => a.localeCompare(b))) {
       if (defs[kind].has(term)) target[term] = defs[kind].get(term);
-      else errors.push(`Glossary: manca la definizione di ${kind} "${term}" (usato dai giochi ID ${used.get(term).join(', ')})`);
+      else errors.push(`Glossary: no definition for ${kind} "${term}" (used by game ID ${used.get(term).join(', ')}): add a row to the Glossary sheet`);
     }
   }
 }
 
 if (warnings.length) {
-  console.warn(`\nAVVISI (${warnings.length}):`);
+  console.warn(`\nWARNINGS (${warnings.length}): the site is published anyway`);
   warnings.forEach((w) => console.warn(`  - ${w}`));
 }
 if (errors.length) fail();
@@ -325,11 +326,12 @@ games.sort((a, b) => a.id - b.id);
 mkdirSync(dirname(OUT_FILE), { recursive: true });
 writeFileSync(OUT_FILE, JSON.stringify({ version: 2, count: games.length, games, glossary }));
 console.log(
-  `OK: ${games.length} giochi, ${Object.keys(glossary.mechanics).length} mechanics, ${Object.keys(glossary.categories).length} categories -> public/catalog.json`,
+  `OK: ${games.length} games, ${Object.keys(glossary.mechanics).length} mechanics, ${Object.keys(glossary.categories).length} categories -> public/catalog.json`,
 );
 
 function fail() {
-  console.error(`\nERRORI (${errors.length}): catalogo NON generato, deploy interrotto.`);
+  console.error(`\nERRORS (${errors.length}): catalog NOT generated, deploy stopped. The site online is unchanged.`);
   errors.forEach((e) => console.error(`  - ${e}`));
+  console.error('\nFix data/Giochi_in_scatola_FINALE.xlsx (the row number is the Excel row) and upload it again.');
   process.exit(1);
 }

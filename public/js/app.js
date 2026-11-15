@@ -69,6 +69,7 @@ const byId = new Map();
 const live = { ok: false, favs: new Set(), plays: {}, total: 0 };
 const auth = { token: null, exp: 0 }; // kept in memory only: gone on reload
 let pending = null; // last play that can still be undone: { playId, id, left, timer }
+let fixedEmpty = false; // the empty-wall message stays visible: catalog not loaded or empty
 
 const els = {
   app: $('#app'), head: $('#mHead'), panel: $('#panel'), wall: $('#wall'), grid: $('#grid'), empty: $('#empty'),
@@ -113,7 +114,7 @@ function applyFilters() {
   }
   els.counts.forEach((e) => { e.textContent = count; });
   els.summary.textContent = summaryText();
-  els.empty.hidden = count > 0 || !games.length;
+  els.empty.hidden = fixedEmpty ? false : count > 0 || !games.length;
 }
 
 // ---------- knobs ----------
@@ -674,6 +675,7 @@ async function init() {
     games = data.games;
     glossary = data.glossary;
   } catch {
+    fixedEmpty = true;
     els.empty.hidden = false;
     els.empty.replaceChildren('Could not load the catalog.', h('br'), h('span', null, 'Please reload the page.'));
     return;
@@ -685,6 +687,11 @@ async function init() {
   }
   els.grid.replaceChildren(...games.map((g) => g._tile));
   applyFilters();
+  if (!games.length) {
+    fixedEmpty = true;
+    els.empty.hidden = false;
+    els.empty.replaceChildren('No games in the catalog yet.', h('br'), h('span', null, 'Add your games to the Excel file and publish it.'));
+  }
   route();
   loadLive();
 }
