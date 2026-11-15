@@ -1,10 +1,21 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "board-game-catalog",
+  "main": "src/worker.js",
   "compatibility_date": "2026-11-13",
   "workers_dev": true,
   "preview_urls": false,
   "assets": {
-    "directory": "./public"
-  }
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "board-game-db",
+      "database_id": "786e070a-c6b0-45ed-861d-d74cbd0a2281"
+    }
+  ],
+  "observability": { "enabled": true }
 }

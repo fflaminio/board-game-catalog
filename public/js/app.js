@@ -20,7 +20,9 @@ const ICONS = {
   book: '<path d="M4 5.5C4 4.7 4.7 4 5.5 4H19v14H6a2 2 0 0 0-2 2z"/><path d="M4 20a2 2 0 0 1 2-2h13"/>',
   note: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
   close: '<path d="M5 5l14 14M19 5L5 19"/>',
+  heart: '<path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 5 6.2 5c2 0 3.5 1.1 4.3 2.5h3C14.3 6.1 15.8 5 17.8 5 21 5 23.1 8.2 21.6 11.7 19.5 16.4 12 21 12 21z"/>',
 };
+const UNDO_SECONDS = 10;
 
 // ---------- tiny DOM helpers ----------
 
@@ -47,26 +49,39 @@ function icon(name, size = 20, stroke = 2) {
   return svg('svg', { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': stroke, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' }, ICONS[name]);
 }
 
+function heartIcon(size) {
+  return svg('svg', { class: 'heart', width: size, height: size, viewBox: '0 0 24 24', 'aria-hidden': 'true' }, ICONS.heart);
+}
+
 const $ = (sel) => document.querySelector(sel);
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 // ---------- state ----------
 
-const state = { dur: 0, ply: 0, eff: 0, cat: 0, q: '' };
+const state = { dur: 0, ply: 0, eff: 0, cat: 0, q: '', fav: false };
 const knobs = {};
 let games = [];
 let glossary = { mechanics: {}, categories: {} };
 const byId = new Map();
 
+// Live data from the API (favorites and plays). `ok` stays false if the API is unreachable:
+// the catalog keeps working and the favorite/play controls stay hidden.
+const live = { ok: false, favs: new Set(), plays: {}, total: 0 };
+const auth = { token: null, exp: 0 }; // kept in memory only: gone on reload
+let pending = null; // last play that can still be undone: { playId, id, left, timer }
+
 const els = {
   app: $('#app'), head: $('#mHead'), panel: $('#panel'), wall: $('#wall'), grid: $('#grid'), empty: $('#empty'),
   knobs: $('#knobs'), search: $('#search'), summary: $('#summary'), overlay: $('#overlay'),
   counts: document.querySelectorAll('[data-count]'),
+  favRow: $('#favRow'), favBtn: $('#favBtn'), toast: $('#toast'),
+  pw: $('#pwDialog'), pwForm: $('#pwForm'), pwInput: $('#pwInput'), pwErr: $('#pwErr'), pwOk: $('#pwOk'),
 };
 
 const effBand = (c) => (c < 1.5 ? 1 : c < 2 ? 2 : c < 2.5 ? 3 : 4);
 
 function matches(g) {
+  if (state.fav && !live.favs.has(g.id)) return false;
   if (state.dur && g.playingTime.max > SCALES.dur.values[state.dur]) return false;
   if (state.ply) {
     const n = SCALES.ply.values[state.ply];
@@ -80,6 +95,7 @@ function matches(g) {
 
 function summaryText() {
   const parts = [];
+  if (state.fav) parts.push('♥ FAVORITES');
   if (state.dur) parts.push(`≤${SCALES.dur.labels[state.dur]}`);
   if (state.ply) parts.push(state.ply === 1 ? '1 PLAYER' : `${SCALES.ply.labels[state.ply]} PLAYERS`);
   if (state.eff) parts.push(SCALES.eff.labels[state.eff].toUpperCase());
@@ -195,8 +211,9 @@ function makeKnob(key) {
 }
 
 function resetFilters() {
-  Object.assign(state, { dur: 0, ply: 0, eff: 0, cat: 0, q: '' });
+  Object.assign(state, { dur: 0, ply: 0, eff: 0, cat: 0, q: '', fav: false });
   els.search.value = '';
+  els.favBtn.setAttribute('aria-pressed', 'false');
   Object.values(knobs).forEach((k) => k.paint());
   applyFilters();
   els.wall.scrollTop = 0;
@@ -221,6 +238,184 @@ function closeSheet() {
   els.head.inert = false;
   els.wall.inert = false;
   if (sheetOpener && !desktopMq.matches) sheetOpener.focus();
+}
+
+// ---------- live data: password, favorites, plays ----------
+
+let toastTimer = null;
+function toast(msg) {
+  els.toast.textContent = msg;
+  els.toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { els.toast.hidden = true; }, 3500);
+}
+
+let pwResolve = null;
+
+// Resolves with a valid token, asking for the password only when there is none (or it expired).
+function requireToken() {
+  if (auth.token && auth.exp - 60 > Date.now() / 1000) return Promise.resolve(auth.token);
+  return new Promise((resolve) => {
+    pwResolve = resolve;
+    els.pwErr.textContent = '';
+    els.pwInput.value = '';
+    els.pw.showModal();
+    els.pwInput.focus();
+  });
+}
+
+async function submitPassword(e) {
+  e.preventDefault();
+  const password = els.pwInput.value;
+  if (!password) { els.pwErr.textContent = 'Type the password.'; return; }
+  els.pwOk.disabled = true;
+  els.pwErr.textContent = '';
+  try {
+    const res = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password }) });
+    if (res.ok) {
+      Object.assign(auth, await res.json());
+      const done = pwResolve;
+      pwResolve = null;
+      els.pw.close();
+      done(auth.token);
+      return;
+    }
+    if (res.status === 401) {
+      const left = Number(res.headers.get('x-attempts-left'));
+      els.pwErr.textContent = left > 0 ? `Wrong password. ${left} ${left === 1 ? 'attempt' : 'attempts'} left.` : 'Wrong password.';
+    } else if (res.status === 429) {
+      const min = Math.ceil(Number(res.headers.get('retry-after') || 900) / 60);
+      els.pwErr.textContent = `Too many attempts. Try again in ${min} min.`;
+    } else if (res.status === 503) els.pwErr.textContent = 'The password is not set up yet.';
+    else els.pwErr.textContent = 'Something went wrong. Try again.';
+  } catch {
+    els.pwErr.textContent = 'No connection. Try again.';
+  } finally {
+    els.pwOk.disabled = false;
+  }
+  els.pwInput.select();
+}
+
+// POST to a protected endpoint; asks for the password if needed. Returns the JSON or null.
+async function api(path, payload, retried) {
+  const token = await requireToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` }, body: JSON.stringify(payload) });
+    if (res.status === 401 && !retried) { auth.token = null; return api(path, payload, true); }
+    if (res.ok) return await res.json();
+    toast(res.status === 409 ? 'Too late to undo.' : 'Something went wrong. Try again.');
+  } catch {
+    toast('No connection. Try again.');
+  }
+  return null;
+}
+
+async function loadLive() {
+  try {
+    const res = await fetch('/api/state', { cache: 'no-store' });
+    if (!res.ok) return;
+    const d = await res.json();
+    live.favs = new Set(d.favorites);
+    live.plays = d.plays;
+    live.total = d.total;
+    live.ok = true;
+  } catch {
+    return;
+  }
+  els.favRow.hidden = false;
+  paintFavs();
+  if (current) renderCard();
+}
+
+function paintFavs() {
+  for (const g of games) {
+    const on = live.favs.has(g.id);
+    g._fav.hidden = !on;
+    g._tile.setAttribute('aria-label', [g.title, g.type === 'expansion' ? 'expansion' : null, on ? 'favorite' : null].filter(Boolean).join(', '));
+  }
+  const btn = els.overlay.querySelector('.cover-fav');
+  if (btn && current) {
+    const on = live.favs.has(current.id);
+    btn.setAttribute('aria-pressed', String(on));
+    btn.setAttribute('aria-label', on ? 'Remove from favorites' : 'Add to favorites');
+  }
+  if (state.fav) applyFilters();
+}
+
+// While a request runs the button is marked busy (not disabled, so keyboard focus stays on it).
+async function busy(btn, task) {
+  if (btn.classList.contains('busy') || !(await requireToken())) return null;
+  btn.classList.add('busy');
+  try { return await task(); } finally { btn.classList.remove('busy'); }
+}
+
+async function toggleFavorite(btn) {
+  const g = current;
+  const r = await busy(btn, () => api('/api/favorite', { id: g.id, on: !live.favs.has(g.id) }));
+  if (!r) return;
+  live.favs = new Set(r.favorites);
+  paintFavs();
+  toast(live.favs.has(g.id) ? `${g.title} added to favorites.` : `${g.title} removed from favorites.`);
+}
+
+const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+function playsText(id) {
+  const p = live.plays[id];
+  if (!p || !p.n) return 'Not played yet';
+  const pct = (p.n / live.total) * 100;
+  return `Played ${p.n}× · ${pct < 1 ? '<1' : Math.round(pct)}% of all plays · last ${fmtDate(p.last)}`;
+}
+
+function paintPlayCap() {
+  const cap = els.overlay.querySelector('.play-cap');
+  if (!cap || !current) return;
+  if (pending && pending.id === current.id) {
+    cap.replaceChildren(h('span', null, 'Play recorded.'),
+      h('button', { type: 'button', class: 'undo-btn', onclick: undoPlay }, `Undo (${pending.left})`));
+  } else cap.replaceChildren(playsText(current.id));
+}
+
+function clearPending() {
+  if (pending) clearInterval(pending.timer);
+  pending = null;
+}
+
+async function addPlay(btn) {
+  const g = current;
+  const r = await busy(btn, () => api('/api/play', { id: g.id }));
+  if (!r) return;
+  live.plays[g.id] = r.game;
+  live.total = r.total;
+  clearPending();
+  pending = { playId: r.playId, id: g.id, left: UNDO_SECONDS };
+  pending.timer = setInterval(() => {
+    pending.left -= 1;
+    if (pending.left <= 0) clearPending();
+    paintPlayCap();
+  }, 1000);
+  paintPlayCap();
+}
+
+async function undoPlay() {
+  if (!pending) return;
+  const { playId, id } = pending;
+  clearPending();
+  paintPlayCap();
+  const r = await api('/api/play/undo', { playId });
+  if (!r) return;
+  live.plays[id] = r.game;
+  live.total = r.total;
+  paintPlayCap();
+  toast('Play removed.');
+}
+
+function playEl(g) {
+  if (!live.ok) return null;
+  const btn = h('button', { type: 'button', class: 'play-btn', onclick: () => addPlay(btn) }, 'Play it!');
+  const box = h('div', { class: 'play' }, btn, h('div', { class: 'play-cap', 'aria-live': 'polite' }));
+  return box;
 }
 
 // ---------- game card ----------
@@ -336,7 +531,11 @@ function pillsEl(g) {
 }
 
 function coverEl(g) {
-  return h('div', { class: 'cover' }, h('img', { src: g.cover, alt: `Cover of ${g.title}`, decoding: 'async' }));
+  const on = live.favs.has(g.id);
+  const fav = live.ok
+    ? h('button', { type: 'button', class: 'cover-fav', 'aria-pressed': String(on), 'aria-label': on ? 'Remove from favorites' : 'Add to favorites', onclick: (e) => toggleFavorite(e.currentTarget) }, heartIcon(22))
+    : null;
+  return h('div', { class: 'cover' }, h('img', { src: g.cover, alt: `Cover of ${g.title}`, decoding: 'async' }), fav);
 }
 
 function titleRow(g) {
@@ -349,7 +548,7 @@ function closeBtn(extra) {
 
 function buildWide(g) {
   const left = h('div', { class: 'col-left' }, coverEl(g), linkCol('rulebook', g), linkCol('music', g));
-  const mid = h('div', { class: 'col-mid' }, titleRow(g), h('p', { class: 'desc' }, g.description), dataGrid(g), creditsEl(g));
+  const mid = h('div', { class: 'col-mid' }, titleRow(g), h('p', { class: 'desc' }, g.description), dataGrid(g), playEl(g), creditsEl(g));
   const right = h('div', { class: 'col-chart' }, chartEl(g));
   return h('section', { class: 'card card--wide' }, closeBtn('card-close-abs'),
     h('div', { class: 'card-top' }, left, mid, right), h('div', { class: 'card-pills' }, pillsEl(g)));
@@ -360,7 +559,7 @@ function buildNarrow(g) {
     h('div', { class: 'card-head' }, h('span', { class: 'label' }, 'GAME CARD'), closeBtn()),
     coverEl(g), titleRow(g), h('p', { class: 'desc' }, g.description), dataGrid(g),
     h('div', { class: 'links' }, linkCol('rulebook', g), linkCol('music', g)),
-    chartEl(g), h('div', { class: 'card-pills' }, pillsEl(g)), creditsEl(g));
+    chartEl(g), playEl(g), h('div', { class: 'card-pills' }, pillsEl(g)), creditsEl(g));
 }
 
 function renderCard() {
@@ -371,7 +570,8 @@ function renderCard() {
   inner.setAttribute('role', 'dialog');
   inner.setAttribute('aria-modal', 'true');
   inner.setAttribute('aria-labelledby', 'cardTitle');
-  els.overlay.querySelector('button').focus({ preventScroll: true });
+  paintPlayCap();
+  if (!els.pw.open) els.overlay.querySelector('button').focus({ preventScroll: true });
 }
 
 function showCard(g) {
@@ -418,9 +618,10 @@ function route() {
 
 function makeTile(g) {
   const label = g.type === 'expansion' ? `${g.title}, expansion` : g.title;
+  g._fav = h('span', { class: 'tile-fav', hidden: true }, heartIcon(14));
   const tile = h('button', { type: 'button', class: 'tile', 'aria-label': label, onclick: () => openGame(g.id) },
     h('img', { src: g.thumb, alt: '', loading: 'lazy', decoding: 'async' }),
-    g.type === 'expansion' ? h('span', { class: 'badge' }, 'EXPANSION') : null);
+    g.type === 'expansion' ? h('span', { class: 'badge' }, 'EXPANSION') : null, g._fav);
   return tile;
 }
 
@@ -433,6 +634,16 @@ async function init() {
   $('#closeFilters').addEventListener('click', closeSheet);
   $('#showGames').addEventListener('click', closeSheet);
   $('#panic').addEventListener('click', resetFilters);
+  els.favBtn.addEventListener('click', () => {
+    state.fav = !state.fav;
+    els.favBtn.setAttribute('aria-pressed', String(state.fav));
+    applyFilters();
+  });
+  els.pwForm.addEventListener('submit', submitPassword);
+  $('#pwCancel').addEventListener('click', () => els.pw.close());
+  els.pw.addEventListener('close', () => {
+    if (pwResolve) { const done = pwResolve; pwResolve = null; done(null); }
+  });
   els.search.addEventListener('input', () => { state.q = els.search.value.trim(); applyFilters(); });
   desktopMq.addEventListener('change', () => { if (desktopMq.matches) closeSheet(); });
   wideMq.addEventListener('change', () => { if (current) renderCard(); });
@@ -441,6 +652,7 @@ async function init() {
     else if (!e.target.closest('.pill')) els.overlay.querySelectorAll('.pill.open').forEach((p) => p.classList.remove('open'));
   });
   document.addEventListener('keydown', (e) => {
+    if (els.pw.open) return; // the password dialog handles its own keys
     if (e.key === 'Escape') {
       const open = current && els.overlay.querySelectorAll('.pill.open');
       if (open && open.length) open.forEach((p) => p.classList.remove('open'));
@@ -474,6 +686,7 @@ async function init() {
   els.grid.replaceChildren(...games.map((g) => g._tile));
   applyFilters();
   route();
+  loadLive();
 }
 
 init();

@@ -36,6 +36,12 @@
       </button>
     </div>
     <div class="knobs" id="knobs"></div>
+    <div class="fav-row" id="favRow" hidden>
+      <div><div class="label fav-title" id="favTitle">FAVORITES</div><div class="hint">Show only my favorite games</div></div>
+      <button type="button" class="fav-btn" id="favBtn" aria-pressed="false" aria-labelledby="favTitle">
+        <span class="fav-cap"><span class="fav-led" aria-hidden="true"></span><svg class="heart" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.2 3 5 6.2 5c2 0 3.5 1.1 4.3 2.5h3C14.3 6.1 15.8 5 17.8 5 21 5 23.1 8.2 21.6 11.7 19.5 16.4 12 21 12 21z"/></svg></span>
+      </button>
+    </div>
     <label class="search">
       <span class="sr-only">Search by keyword</span>
       <input class="lcd lcd-input" id="search" type="text" placeholder="SEARCH …" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="60">
@@ -61,6 +67,20 @@
 </div>
 
 <div class="overlay" id="overlay" hidden></div>
+
+<dialog class="pw" id="pwDialog" aria-labelledby="pwTitle" aria-describedby="pwHint">
+  <form id="pwForm" novalidate>
+    <div class="label pw-title" id="pwTitle">OWNER PASSWORD</div>
+    <p class="hint" id="pwHint">Needed to change favorites and record plays.</p>
+    <label><span class="sr-only">Password</span><input class="lcd lcd-input" id="pwInput" type="password" maxlength="16" autocomplete="current-password" required></label>
+    <p class="pw-err" id="pwErr" role="alert"></p>
+    <div class="pw-actions">
+      <button type="button" class="keycap ghost" id="pwCancel">Cancel</button>
+      <button type="submit" class="keycap" id="pwOk">Unlock</button>
+    </div>
+  </form>
+</dialog>
+<div class="toast lcd" id="toast" role="status" aria-live="polite" hidden></div>
 <noscript><p style="padding:24px;font-family:sans-serif">This catalog needs JavaScript to filter and show the games.</p></noscript>
 </body>
 </html>

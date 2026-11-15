@@ -127,6 +127,55 @@ a:hover { color: var(--cta2); }
 .tile:active { transform: translateY(1px); }
 .badge { position: absolute; left: 5px; bottom: 5px; padding: 2px 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; background: var(--walnut); color: var(--cream); border-radius: 6px; border: 1px solid var(--dark); }
 
+/* ---------- favorites and plays ---------- */
+.heart path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.fav-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 2px solid var(--edge); border-bottom: 2px solid var(--edge); }
+.fav-title { font-size: 14px; }
+.fav-btn { position: relative; flex: none; width: 92px; height: 62px; padding: 0; border: 0; cursor: pointer; border-radius: 12px; background: var(--lcd); box-shadow: inset 0 2px 5px rgba(0, 0, 0, .65), 0 1px 0 rgba(255, 250, 230, .6); }
+.fav-cap {
+  position: absolute; left: 6px; right: 6px; top: 5px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--ink);
+  border-radius: 8px; background: linear-gradient(#F6EBCF, #DCC89B); border: 2px solid var(--dark);
+  box-shadow: 0 5px 0 var(--walnut-dk), inset 0 1px 0 rgba(255, 250, 230, .75); transition: top .1s ease, box-shadow .1s ease;
+}
+.fav-led { position: absolute; left: 8px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--mech-edge); }
+.fav-btn[aria-pressed="true"] .fav-cap { top: 9px; color: var(--red); background: linear-gradient(#D7C497, #CDB98C); box-shadow: 0 1px 0 var(--walnut-dk), inset 0 3px 6px rgba(58, 42, 30, .35); }
+.fav-btn[aria-pressed="true"] .fav-led { background: var(--amber); box-shadow: 0 0 8px 2px rgba(255, 183, 74, .85); }
+.fav-btn[aria-pressed="true"] .heart path, .tile-fav .heart path, .cover-fav[aria-pressed="true"] .heart path { fill: currentColor; }
+
+.tile-fav { position: absolute; right: 5px; top: 5px; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--cream); border: 2px solid var(--ink); color: var(--red); }
+.cover-fav {
+  position: absolute; right: 8px; top: 8px; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  border-radius: 50%; background: var(--cream); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 0 var(--ink);
+}
+.cover-fav[aria-pressed="true"] { color: var(--red); }
+.cover-fav:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.cover-fav.busy, .play-btn.busy { cursor: progress; }
+
+.play { display: flex; flex-direction: column; gap: 8px; }
+.play-btn {
+  height: 64px; cursor: pointer; font-family: var(--font-h); font-weight: 700; font-size: 26px; letter-spacing: .04em;
+  background: linear-gradient(var(--cta1), var(--cta2)); color: var(--cta-fg); text-shadow: 0 2px 0 var(--cta-dk);
+  border: 3px solid var(--ink); border-radius: 16px; transition: transform .08s ease, box-shadow .08s ease;
+  box-shadow: 0 6px 0 var(--cta-dk), 0 10px 14px rgba(58, 42, 30, .35), inset 0 2px 0 rgba(255, 220, 170, .45);
+}
+.play-btn:hover { filter: brightness(1.06); }
+.play-btn:active, .play-btn.busy { transform: translateY(5px); box-shadow: 0 1px 0 var(--cta-dk), inset 0 2px 0 rgba(255, 220, 170, .45); }
+.play-cap { min-height: 28px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted); text-align: center; }
+.undo-btn { height: 28px; padding: 0 12px; cursor: pointer; font-family: var(--font-b); font-weight: 800; font-size: 13px; background: var(--lcd); color: var(--amber); border: 2px solid var(--dark); border-radius: 8px; }
+
+.pw { width: min(360px, calc(100% - 32px)); padding: 22px; color: var(--ink); background: var(--panel); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 8px 8px 0 var(--ink); }
+.pw::backdrop { background: rgba(42, 31, 22, .6); }
+.pw form { display: flex; flex-direction: column; gap: 12px; }
+.pw-title { font-size: 15px; letter-spacing: .14em; }
+.pw .hint { margin: -6px 0 0; font-size: 13px; }
+.pw .lcd-input { text-transform: none; letter-spacing: .2em; }
+.pw-err { margin: 0; min-height: 18px; font-size: 13px; font-weight: 800; color: #9E1F0E; }
+.pw-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.keycap.ghost { background: var(--mech); color: var(--ink); border-color: var(--mech-edge); box-shadow: 0 5px 0 var(--mech-edge); }
+.keycap.ghost:hover { color: var(--ink); }
+.keycap:disabled { cursor: progress; filter: saturate(.7); }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 60; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 10px 16px; font-size: 15px; box-shadow: 0 8px 18px rgba(0, 0, 0, .35); }
+
 /* ---------- game card ---------- */
 .overlay { position: fixed; inset: 0; z-index: 30; display: flex; overflow-y: auto; background: rgba(42, 31, 22, .68); overscroll-behavior: contain; }
 .card { position: relative; margin: auto; color: var(--ink); background: var(--card); font-family: var(--font-b); }
@@ -137,7 +186,7 @@ a:hover { color: var(--cta2); }
 .desc { line-height: 1.5; }
 
 .cover { position: relative; flex: none; aspect-ratio: 1 / 1; background: var(--tile); border: 2px solid var(--edge); border-radius: 12px; }
-.cover img { display: block; width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+.cover img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; padding: 6px; }
 
 .data { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
 .cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -197,6 +246,7 @@ a:hover { color: var(--cta2); }
 .card--wide .year { font-size: 18px; }
 .card--wide .desc { font-size: 17px; }
 .card--wide .credits { margin-top: auto; }
+.card--wide .play { width: 300px; align-self: center; margin-top: 4px; }
 .card--wide .card-pills { border-top: 2px solid var(--edge); padding-top: 18px; }
 .card-close-abs { position: absolute; right: -18px; top: -18px; z-index: 6; }
 
