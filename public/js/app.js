@@ -492,8 +492,14 @@ function creditsEl(g) {
   if (g.artist) parts.push(`Artist: ${g.artist}`);
   if (g.publisher) parts.push(`Publisher: ${g.publisher}`);
   const box = h('div', { class: 'credits' }, parts.join(' · '));
-  if (g.bgg.url) box.append(parts.length ? ' · ' : '', h('a', { href: g.bgg.url, target: '_blank', rel: 'noopener noreferrer' }, 'Source: BoardGameGeek'));
+  if (g.bgg.url) box.append(parts.length ? ' · ' : '', h('a', { href: g.bgg.url, target: '_blank', rel: 'noopener noreferrer' }, `Source: ${sourceName(g.bgg)}`));
   return box;
+}
+
+// Non-BGG games link to a publisher or shop page: name its site.
+function sourceName(bgg) {
+  if (bgg.id) return 'BoardGameGeek';
+  try { return new URL(bgg.url).hostname.replace(/^www\./, ''); } catch { return 'Website'; }
 }
 
 function placeTip(pill) {
